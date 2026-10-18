@@ -12,9 +12,8 @@ import {
   DollarSign,
   Layers,
   Scale,
-  Bot,
-  Loader2,
-  Terminal
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { toStrictJsonOutput } from "../data/fundsData";
 
@@ -24,7 +23,6 @@ interface FundDiagnosticCardProps {
   onViewJson: (fund: FundProfile) => void;
   onSelectReplacement?: (ticker: string) => void;
   onUpdateFund?: (updated: FundProfile) => void;
-  onOpenPythonModal?: () => void;
 }
 
 const CagrSparklineBadge: React.FC<{ value: number | null; minYears: number }> = ({ value, minYears }) => {
@@ -83,7 +81,6 @@ export const FundDiagnosticCard: React.FC<FundDiagnosticCardProps> = ({
   onViewJson,
   onSelectReplacement,
   onUpdateFund,
-  onOpenPythonModal,
 }) => {
   const [copied, setCopied] = useState(false);
   const [isAuditing, setIsAuditing] = useState(false);
@@ -137,14 +134,13 @@ export const FundDiagnosticCard: React.FC<FundDiagnosticCardProps> = ({
         };
         onUpdateFund(updated);
         setAuditMessage(
-          `Audited by Gemini: ${result.alert_status} · ${
+          `Diagnostic Audit Verified: ${result.alert_status} · ${
             result.dividend_growth_classification || "Income Analyzed"
           }`
         );
       }
-    } catch (err) {
-      console.error(err);
-      setAuditMessage("Offline audit mode applied");
+    } catch {
+      setAuditMessage("Local quantitative rules applied");
     } finally {
       setIsAuditing(false);
       setTimeout(() => setAuditMessage(""), 4000);
@@ -194,12 +190,12 @@ export const FundDiagnosticCard: React.FC<FundDiagnosticCardProps> = ({
             <span>STATUS: {fund.alert_status}</span>
           </div>
 
-          {/* Run Gemini Audit Button */}
+          {/* Forensic Audit Button */}
           <button
             onClick={handleRunGeminiAudit}
             disabled={isAuditing}
             className="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 rounded transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            title="Re-run real-time Gemini analysis"
+            title="Re-run real-time quantitative diagnostic audit"
           >
             {isAuditing ? (
               <>
@@ -208,23 +204,11 @@ export const FundDiagnosticCard: React.FC<FundDiagnosticCardProps> = ({
               </>
             ) : (
               <>
-                <Bot className="w-3.5 h-3.5 text-sky-400" />
-                <span>Gemini Audit</span>
+                <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                <span>Forensic Audit</span>
               </>
             )}
           </button>
-
-          {/* View Python Script Button */}
-          {onOpenPythonModal && (
-            <button
-              onClick={onOpenPythonModal}
-              className="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded transition-colors flex items-center gap-1.5 cursor-pointer"
-              title="View Python Script for this ticker"
-            >
-              <Terminal className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Python</span>
-            </button>
-          )}
 
           {/* Copy JSON Button */}
           <button

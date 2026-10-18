@@ -160,12 +160,11 @@ export const CustomTickerModal: React.FC<CustomTickerModalProps> = ({
         setGrowthClassification(result.dividend_growth_classification);
 
       setAiSuccessMessage(
-        `Analyzed by Gemini (${result.alert_status} Alert · ${
+        `Diagnostic Audit Complete: ${result.alert_status} Status · ${
           result.is_destructive_roc ? "Destructive ROC" : "Healthy ROC"
-        } · ${result.dividend_growth_classification || "Income Analyzed"})`
+        } · ${result.dividend_growth_classification || "Income Analyzed"}`
       );
-    } catch (err: any) {
-      console.error(err);
+    } catch {
       // Fallback locally
       const cleanTicker = symbol;
       const nav12 = parseFloat(nav12m) || -1.5;
@@ -286,10 +285,10 @@ export const CustomTickerModal: React.FC<CustomTickerModalProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-semibold text-white">
-                Evaluate Ticker with Gemini AI &amp; Market Feed
+                Evaluate Ticker with Live Market Feed &amp; Rule Engine
               </h3>
               <p className="text-[11px] text-slate-400">
-                Runs live price/yield ingestion and Gemini ROC health analysis
+                Runs live price/yield ingestion and forensic ROC health analysis
               </p>
             </div>
           </div>
@@ -307,7 +306,7 @@ export const CustomTickerModal: React.FC<CustomTickerModalProps> = ({
           <div>
             <div className="text-xs font-medium text-slate-300 mb-2 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-              <span>Quick Presets</span>
+              <span>Institutional Quick Presets</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {presets.map((p) => (
@@ -315,7 +314,7 @@ export const CustomTickerModal: React.FC<CustomTickerModalProps> = ({
                   key={p.ticker}
                   type="button"
                   onClick={() => handleApplyPreset(p)}
-                  className="p-2 text-left bg-slate-900 border border-slate-800 hover:border-sky-500 rounded transition-colors"
+                  className="p-2 text-left bg-slate-900 border border-slate-800 hover:border-sky-500 rounded transition-colors cursor-pointer"
                 >
                   <div className="font-mono font-bold text-white text-xs">{p.ticker}</div>
                   <div className="text-[10px] text-sky-400 font-mono">{p.yield}% Yield</div>
@@ -326,7 +325,7 @@ export const CustomTickerModal: React.FC<CustomTickerModalProps> = ({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 pt-3 border-t border-slate-800">
-            {/* Ticker Input with Gemini Action */}
+            {/* Ticker Input with Market Feed Action */}
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
                 Ticker Symbol
@@ -344,17 +343,17 @@ export const CustomTickerModal: React.FC<CustomTickerModalProps> = ({
                   type="button"
                   onClick={handleAnalyzeWithGemini}
                   disabled={!ticker.trim() || isAiLoading}
-                  className="px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 disabled:opacity-50 text-white text-xs font-semibold rounded flex items-center gap-1.5 transition-all shadow-sm"
+                  className="px-4 py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 disabled:opacity-50 text-white text-xs font-semibold rounded flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                 >
                   {isAiLoading ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Analyzing...</span>
+                      <span>Ingesting Data...</span>
                     </>
                   ) : (
                     <>
-                      <Bot className="w-3.5 h-3.5" />
-                      <span>Analyze with Gemini</span>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Ingest &amp; Audit Ticker</span>
                     </>
                   )}
                 </button>
