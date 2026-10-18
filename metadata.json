@@ -1,0 +1,6 @@
+{
+  "name": "Income ETF & Covered Call Evaluator",
+  "description": "Executive wealth management diagnostic engine evaluating covered call ETFs, dividend safety, Return of Capital (ROC) health, and NAV erosion risk.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

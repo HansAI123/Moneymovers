@@ -1,0 +1,6 @@
+{
+  "summary": "Architectural blueprint and implementation plan for the Income ETF & Covered Call Evaluator, detailing dividend safety assessment, Return of Capital (ROC) analysis, NAV erosion tracking, benchmark comparisons against SPY and QQQ, interactive simulator, and strict JSON export formatting.",
+  "updatedAt": "2026-10-18T03:24:27.660357277Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

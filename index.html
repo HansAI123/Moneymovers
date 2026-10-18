@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      (function() {
+        const OrigWebSocket = window.WebSocket;
+        if (OrigWebSocket) {
+          window.WebSocket = function (url, protocols) {
+            if (protocols === 'vite-hmr' || (typeof url === 'string' && (url.includes('token=') || url.includes('24678') || url.includes('/@vite/client')))) {
+              const target = new EventTarget();
+              target.readyState = 1; // WebSocket.OPEN
+              target.url = String(url);
+              target.protocol = 'vite-hmr';
+              target.send = function() {};
+              target.close = function() {
+                target.readyState = 3;
+                target.dispatchEvent(new Event('close'));
+              };
+              setTimeout(function() {
+                target.dispatchEvent(new Event('open'));
+              }, 10);
+              return target;
+            }
+            return new OrigWebSocket(url, protocols);
+          };
+          window.WebSocket.prototype = OrigWebSocket.prototype;
+          window.WebSocket.CONNECTING = 0;
+          window.WebSocket.OPEN = 1;
+          window.WebSocket.CLOSING = 2;
+          window.WebSocket.CLOSED = 3;
+        }
+
+        window.addEventListener('unhandledrejection', function (e) {
+          if (e.reason && (e.reason.message?.includes('WebSocket') || e.reason.message?.includes('closed without opened') || String(e.reason).includes('WebSocket'))) {
+            e.preventDefault();
+            e.stopImmediatePropagation?.();
+          }
+        });
+        window.addEventListener('error', function (e) {
+          if (e.message && (e.message.includes('WebSocket') || e.message.includes('closed without opened'))) {
+            e.preventDefault();
+            e.stopImmediatePropagation?.();
+          }
+        });
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Income ETF &amp; Covered Call Evaluator</title>
+    <meta name="description" content="Executive wealth management diagnostic engine evaluating covered call ETFs, dividend safety, Return of Capital (ROC) health, and NAV erosion risk." />
+    <meta property="og:title" content="Income ETF &amp; Covered Call Evaluator" />
+    <meta property="og:description" content="Executive wealth management diagnostic engine evaluating covered call ETFs, dividend safety, Return of Capital (ROC) health, and NAV erosion risk." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
