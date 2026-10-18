@@ -81,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              ROC Simulator
+              Tax &amp; ROC Simulator
             </button>
           </nav>
 

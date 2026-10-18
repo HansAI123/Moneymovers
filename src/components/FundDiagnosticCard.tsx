@@ -27,6 +27,56 @@ interface FundDiagnosticCardProps {
   onOpenPythonModal?: () => void;
 }
 
+const CagrSparklineBadge: React.FC<{ value: number | null; minYears: number }> = ({ value, minYears }) => {
+  if (value === null) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[11px] text-slate-500 font-sans">
+        <svg className="w-5 h-2.5 text-slate-600" viewBox="0 0 24 10" fill="none">
+          <line x1="2" y1="5" x2="22" y2="5" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 2" />
+        </svg>
+        <span>N/A (&lt;{minYears}Y)</span>
+      </span>
+    );
+  }
+
+  const isPositive = value >= 0;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-semibold border ${
+        isPositive
+          ? "bg-emerald-950/70 border-emerald-700/60 text-emerald-300 shadow-xs"
+          : "bg-rose-950/70 border-rose-700/60 text-rose-300 shadow-xs"
+      }`}
+    >
+      <svg
+        className={`w-6 h-3 ${isPositive ? "text-emerald-400" : "text-rose-400"}`}
+        viewBox="0 0 24 10"
+        fill="none"
+      >
+        {isPositive ? (
+          <path
+            d="M 2 8 C 8 7, 14 3, 22 2"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+          />
+        ) : (
+          <path
+            d="M 2 2 C 8 3, 14 7, 22 8"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+          />
+        )}
+      </svg>
+      <span>
+        {isPositive ? "+" : ""}
+        {value.toFixed(1)}%
+      </span>
+    </span>
+  );
+};
+
 export const FundDiagnosticCard: React.FC<FundDiagnosticCardProps> = ({
   fund,
   benchmarks,
@@ -378,38 +428,14 @@ export const FundDiagnosticCard: React.FC<FundDiagnosticCardProps> = ({
               {fund.dividend_growth_classification}
             </span>
           </div>
-          <div className="space-y-2 font-mono tabular-nums text-xs">
+          <div className="space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-slate-400">3-Year Dividend CAGR</span>
-              <span
-                className={`font-semibold ${
-                  fund.dividend_cagr_3y_pct === null
-                    ? "text-slate-500 font-sans"
-                    : fund.dividend_cagr_3y_pct > 0
-                    ? "text-emerald-400"
-                    : "text-rose-400 font-bold"
-                }`}
-              >
-                {fund.dividend_cagr_3y_pct !== null
-                  ? `${fund.dividend_cagr_3y_pct > 0 ? "+" : ""}${fund.dividend_cagr_3y_pct.toFixed(1)}%`
-                  : "N/A (<3Y)"}
-              </span>
+              <CagrSparklineBadge value={fund.dividend_cagr_3y_pct} minYears={3} />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-400">5-Year Dividend CAGR</span>
-              <span
-                className={`font-semibold ${
-                  fund.dividend_cagr_5y_pct === null
-                    ? "text-slate-500 font-sans"
-                    : fund.dividend_cagr_5y_pct > 0
-                    ? "text-emerald-400"
-                    : "text-rose-400 font-bold"
-                }`}
-              >
-                {fund.dividend_cagr_5y_pct !== null
-                  ? `${fund.dividend_cagr_5y_pct > 0 ? "+" : ""}${fund.dividend_cagr_5y_pct.toFixed(1)}%`
-                  : "N/A (<5Y)"}
-              </span>
+              <CagrSparklineBadge value={fund.dividend_cagr_5y_pct} minYears={5} />
             </div>
             <div className="flex items-center justify-between border-t border-slate-800 pt-1.5 font-sans">
               <span className="text-slate-300 font-medium">Growth Trajectory</span>

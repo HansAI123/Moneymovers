@@ -262,8 +262,8 @@ export default function App() {
           />
         )}
 
-        {/* Tab 5: Interactive ROC & Dividend Simulator */}
-        {activeTab === "simulator" && <RocSimulator />}
+        {/* Tab 5: Interactive ROC & Tax Efficiency Simulator */}
+        {activeTab === "simulator" && <RocSimulator funds={funds} />}
       </main>
 
       {/* Strict JSON Output Modal */}

@@ -1,7 +1,24 @@
 import React, { useState, useId } from "react";
-import { Calculator, AlertTriangle, ShieldCheck, AlertOctagon, RefreshCw } from "lucide-react";
+import {
+  Calculator,
+  AlertTriangle,
+  ShieldCheck,
+  AlertOctagon,
+  RefreshCw,
+  Scale,
+  Sparkles,
+  Layers,
+  ArrowRight
+} from "lucide-react";
+import { FundProfile } from "../types/fund";
+import { TaxEfficiencyCalculator } from "./TaxEfficiencyCalculator";
 
-export const RocSimulator: React.FC = () => {
+interface RocSimulatorProps {
+  funds?: FundProfile[];
+}
+
+export const RocSimulator: React.FC<RocSimulatorProps> = ({ funds = [] }) => {
+  const [activeSimulatorTab, setActiveSimulatorTab] = useState<"tax" | "roc" | "combined">("combined");
   const initialCapId = useId();
   const yieldPctId = useId();
   const mktReturnId = useId();
@@ -93,7 +110,67 @@ export const RocSimulator: React.FC = () => {
   const results = calculateProjection();
 
   return (
-    <div className="bg-[#0f172a] border border-slate-800 rounded-lg p-5">
+    <div className="space-y-6">
+      {/* Simulation Suite Sub-Navbar */}
+      <div className="bg-[#0f172a] border border-slate-800 rounded-lg p-3 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Calculator className="w-4 h-4 text-sky-400" />
+          <span className="text-xs font-semibold text-white">Simulation &amp; Tax Suite</span>
+          <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
+            | Financial Modeling Tools
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-lg border border-slate-800 text-xs font-medium">
+          <button
+            onClick={() => setActiveSimulatorTab("tax")}
+            className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSimulatorTab === "tax"
+                ? "bg-emerald-500 text-slate-950 font-bold shadow-xs"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Scale className="w-3.5 h-3.5" />
+            <span>Tax Efficiency Calculator</span>
+            <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-950/80 text-emerald-300 font-bold border border-emerald-700/60">
+              NEW
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveSimulatorTab("roc")}
+            className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSimulatorTab === "roc"
+                ? "bg-sky-500 text-slate-950 font-bold shadow-xs"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>ROC &amp; NAV Preservation</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSimulatorTab("combined")}
+            className={`px-3 py-1.5 rounded transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSimulatorTab === "combined"
+                ? "bg-slate-700 text-white font-bold"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Combined View</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Tax Efficiency Calculator */}
+      {(activeSimulatorTab === "tax" || activeSimulatorTab === "combined") && (
+        <TaxEfficiencyCalculator funds={funds} />
+      )}
+
+      {/* ROC & Capital Preservation Simulator */}
+      {(activeSimulatorTab === "roc" || activeSimulatorTab === "combined") && (
+        <div className="bg-[#0f172a] border border-slate-800 rounded-lg p-5">
       <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
         <div>
           <h2 className="text-base font-semibold text-white flex items-center gap-2">
@@ -358,5 +435,7 @@ export const RocSimulator: React.FC = () => {
         </div>
       </div>
     </div>
+  )}
+</div>
   );
 };

@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { FundProfile, FundCategory, DividendGrowthClassification } from "../types/fund";
 import { evaluateFundRules, classifyDividendGrowth } from "../data/fundsData";
 import { X, Plus, Search, Sparkles, Bot, Loader2, CheckCircle2, TrendingUp } from "lucide-react";
@@ -466,6 +467,7 @@ export const CustomTickerModal: React.FC<CustomTickerModalProps> = ({
                     className="w-full bg-[#080d1a] border border-slate-700 rounded px-2.5 py-1 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
                   />
                 </div>
+              </div>
             </div>
 
             {/* Dividend CAGR & Growth Sustainability */}
