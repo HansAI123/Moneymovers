@@ -3,45 +3,33 @@
   <head>
     <script>
       (function() {
-        const OrigWebSocket = window.WebSocket;
-        if (OrigWebSocket) {
-          window.WebSocket = function (url, protocols) {
-            if (protocols === 'vite-hmr' || (typeof url === 'string' && (url.includes('token=') || url.includes('24678') || url.includes('/@vite/client')))) {
-              const target = new EventTarget();
-              target.readyState = 1; // WebSocket.OPEN
-              target.url = String(url);
-              target.protocol = 'vite-hmr';
-              target.send = function() {};
-              target.close = function() {
-                target.readyState = 3;
-                target.dispatchEvent(new Event('close'));
-              };
-              setTimeout(function() {
-                target.dispatchEvent(new Event('open'));
-              }, 10);
-              return target;
-            }
-            return new OrigWebSocket(url, protocols);
-          };
-          window.WebSocket.prototype = OrigWebSocket.prototype;
-          window.WebSocket.CONNECTING = 0;
-          window.WebSocket.OPEN = 1;
-          window.WebSocket.CLOSING = 2;
-          window.WebSocket.CLOSED = 3;
+        function shouldSuppress(msg) {
+          if (!msg) return false;
+          var s = String(msg).toLowerCase();
+          return s.indexOf('websocket') !== -1 ||
+                 s.indexOf('closed without opened') !== -1 ||
+                 s.indexOf('@vite/client') !== -1 ||
+                 s.indexOf('vite-hmr') !== -1;
         }
-
-        window.addEventListener('unhandledrejection', function (e) {
-          if (e.reason && (e.reason.message?.includes('WebSocket') || e.reason.message?.includes('closed without opened') || String(e.reason).includes('WebSocket'))) {
-            e.preventDefault();
-            e.stopImmediatePropagation?.();
+        window.addEventListener('unhandledrejection', function(e) {
+          if (e && e.reason) {
+            var msg = e.reason.message || String(e.reason);
+            if (shouldSuppress(msg)) {
+              e.preventDefault();
+              e.stopImmediatePropagation();
+              return true;
+            }
           }
-        });
-        window.addEventListener('error', function (e) {
-          if (e.message && (e.message.includes('WebSocket') || e.message.includes('closed without opened'))) {
+        }, true);
+        window.addEventListener('error', function(e) {
+          var msg = (e && e.message) ? e.message : '';
+          var src = (e && e.filename) ? e.filename : '';
+          if (shouldSuppress(msg) || shouldSuppress(src)) {
             e.preventDefault();
-            e.stopImmediatePropagation?.();
+            e.stopImmediatePropagation();
+            return true;
           }
-        });
+        }, true);
       })();
     </script>
     <meta charset="UTF-8" />

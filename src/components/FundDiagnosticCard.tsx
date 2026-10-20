@@ -23,6 +23,7 @@ interface FundDiagnosticCardProps {
   onViewJson: (fund: FundProfile) => void;
   onSelectReplacement?: (ticker: string) => void;
   onUpdateFund?: (updated: FundProfile) => void;
+  onOpenSec19aNotice?: (ticker: string) => void;
 }
 
 const CagrSparklineBadge: React.FC<{ value: number | null; minYears: number }> = ({ value, minYears }) => {
@@ -81,6 +82,7 @@ export const FundDiagnosticCard: React.FC<FundDiagnosticCardProps> = ({
   onViewJson,
   onSelectReplacement,
   onUpdateFund,
+  onOpenSec19aNotice,
 }) => {
   const [copied, setCopied] = useState(false);
   const [isAuditing, setIsAuditing] = useState(false);
@@ -210,6 +212,18 @@ export const FundDiagnosticCard: React.FC<FundDiagnosticCardProps> = ({
             )}
           </button>
 
+          {/* SEC Rule 19a-1 Forensic Audit Button */}
+          {onOpenSec19aNotice && (
+            <button
+              onClick={() => onOpenSec19aNotice(fund.ticker)}
+              className="px-3 py-1.5 text-xs bg-sky-950/80 hover:bg-sky-900/90 text-sky-300 border border-sky-700/80 rounded transition-colors flex items-center gap-1.5 cursor-pointer font-medium shadow-xs"
+              title="Audit fund SEC Rule 19a-1 notice: Net Investment Income vs. Return of Principal"
+            >
+              <Scale className="w-3.5 h-3.5 text-sky-400" />
+              <span>SEC 19a-1 Notice</span>
+            </button>
+          )}
+
           {/* Copy JSON Button */}
           <button
             onClick={handleCopyJson}
@@ -230,6 +244,18 @@ export const FundDiagnosticCard: React.FC<FundDiagnosticCardProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Volatility Context & Yield Sustainability Banner */}
+      {fund.distribution_yield_pct >= 9.5 && (
+        <div className="mt-3 p-3 bg-amber-950/30 border border-amber-800/60 rounded-lg flex items-start gap-2.5 text-xs">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-slate-300 leading-relaxed">
+            <span className="text-amber-300 font-semibold">Volatility Context Score:</span>{" "}
+            This fund is yielding an elevated <span className="text-amber-200 font-mono font-bold">{fund.distribution_yield_pct.toFixed(1)}%</span> driven primarily by option writing. If historical CBOE VIX drops towards 52-week lows (&lt;13–15), option premiums compress sharply. The app classifies this yield as{" "}
+            <span className="text-amber-200 underline font-semibold">⚠️ Unsustainable / Likely to Drop</span> rather than projecting it forward as a safe permanent baseline.
+          </div>
+        </div>
+      )}
 
       {auditMessage && (
         <div className="mt-2 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-900 px-3 py-1 rounded">

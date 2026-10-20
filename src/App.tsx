@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PRELOADED_FUNDS, BENCHMARKS, toStrictJsonOutput } from "./data/fundsData";
-import { FundProfile, AlertStatus, FundCategory } from "./types/fund";
+import { FundProfile, AlertStatus, FundCategory, ProjectWorkspace, ProjectHolding } from "./types/fund";
 import { Navbar, NavTab } from "./components/Navbar";
 import { MetricRibbon } from "./components/MetricRibbon";
 import { FundMatrixTable, TableFilter } from "./components/FundMatrixTable";
@@ -11,25 +11,135 @@ import { PortfolioEngine } from "./components/PortfolioEngine";
 import { JsonViewerModal } from "./components/JsonViewerModal";
 import { CustomTickerModal } from "./components/CustomTickerModal";
 import { LandingPage } from "./components/LandingPage";
+import { AuthModal } from "./components/AuthModal";
+import { WorkspaceManagerModal } from "./components/WorkspaceManagerModal";
+import { InteractiveAnalyticsSuite } from "./components/InteractiveAnalyticsSuite";
+import { ExecutiveAuditReport } from "./components/ExecutiveAuditReport";
+import { OverlapMatrix } from "./components/OverlapMatrix";
+import { Sec19aAuditModal } from "./components/Sec19aAuditModal";
+import {
+  subscribeToAuth,
+  logoutUser,
+  fetchUserProjects,
+  saveUserProject,
+  deleteUserProject,
+} from "./services/firebase";
 import {
   ShieldAlert,
   Search,
   Plus,
   FileJson,
   Layers,
-  ArrowRight
+  ArrowRight,
+  TrendingUp,
+  Sliders,
+  CheckCircle2,
+  Briefcase,
 } from "lucide-react";
+
+// Default initial project workspaces
+const DEFAULT_INITIAL_WORKSPACES: ProjectWorkspace[] = [
+  {
+    id: "proj_retirement_ira",
+    userId: "guest",
+    name: "Retirement Cash Flow IRA",
+    description: "Capital preservation covered call portfolio with 8.5% target distribution yield",
+    accountType: "traditional_ira",
+    initialCapital: 100000,
+    targetYieldPct: 8.5,
+    marginalTaxRatePct: 24,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    holdings: [
+      { ticker: "JEPI", weight_pct: 40 },
+      { ticker: "SPYI", weight_pct: 35 },
+      { ticker: "JEPQ", weight_pct: 25 },
+    ],
+  },
+  {
+    id: "proj_taxable_shielded",
+    userId: "guest",
+    name: "Tax-Shielded Growth & Income",
+    description: "Section 1256 index call spread focus for 60/40 capital gains tax optimization",
+    accountType: "taxable",
+    initialCapital: 50000,
+    targetYieldPct: 10.0,
+    marginalTaxRatePct: 28,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    holdings: [
+      { ticker: "SPYI", weight_pct: 45 },
+      { ticker: "JEPI", weight_pct: 30 },
+      { ticker: "GPIX", weight_pct: 25 },
+    ],
+  },
+];
 
 export default function App() {
   const [funds, setFunds] = useState<FundProfile[]>(PRELOADED_FUNDS);
   const [selectedTicker, setSelectedTicker] = useState<string>("JEPI");
   const [activeTab, setActiveTab] = useState<NavTab>("overview");
   const [tableFilter, setTableFilter] = useState<TableFilter>("ALL");
+
+  // Modals state
   const [isJsonModalOpen, setIsJsonModalOpen] = useState<boolean>(false);
   const [isCustomModalOpen, setIsCustomModalOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState<boolean>(false);
+  const [isSec19aModalOpen, setIsSec19aModalOpen] = useState<boolean>(false);
+  const [sec19aAuditTicker, setSec19aAuditTicker] = useState<string>("SPYI");
+  const [editingWorkspace, setEditingWorkspace] = useState<ProjectWorkspace | null>(null);
+
+  // Authentication and Multi-Project Workspace state
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
+  const [projects, setProjects] = useState<ProjectWorkspace[]>(DEFAULT_INITIAL_WORKSPACES);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(DEFAULT_INITIAL_WORKSPACES[0].id);
+
+  // Active project workspace
+  const activeWorkspace =
+    projects.find((p) => p.id === activeWorkspaceId) || projects[0] || DEFAULT_INITIAL_WORKSPACES[0];
 
   // Active fund for deep diagnostic view
   const activeFund = funds.find((f) => f.ticker === selectedTicker) || funds[0];
+
+  // Subscribe to Firebase Auth and load user's projects
+  useEffect(() => {
+    const unsubscribe = subscribeToAuth(async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        // Fetch projects from Firestore
+        const userProjects = await fetchUserProjects(user.uid);
+        if (userProjects.length > 0) {
+          setProjects(userProjects);
+          setActiveWorkspaceId(userProjects[0].id);
+        } else {
+          // Initialize user with default templates
+          const initialized = DEFAULT_INITIAL_WORKSPACES.map((p) => ({
+            ...p,
+            id: `proj_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            userId: user.uid,
+          }));
+          setProjects(initialized);
+          setActiveWorkspaceId(initialized[0].id);
+          for (const proj of initialized) {
+            await saveUserProject(user.uid, proj);
+          }
+        }
+      } else {
+        // Load local guest projects
+        const localProjects = await fetchUserProjects("guest");
+        if (localProjects.length > 0) {
+          setProjects(localProjects);
+          setActiveWorkspaceId(localProjects[0].id);
+        } else {
+          setProjects(DEFAULT_INITIAL_WORKSPACES);
+          setActiveWorkspaceId(DEFAULT_INITIAL_WORKSPACES[0].id);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleSelectFund = (ticker: string) => {
     setSelectedTicker(ticker);
@@ -56,17 +166,75 @@ export default function App() {
     setFunds(funds.map((f) => (f.ticker === updatedFund.ticker ? updatedFund : f)));
   };
 
+  // Workspace CRUD handlers
+  const handleSaveWorkspace = async (savedWorkspace: ProjectWorkspace) => {
+    const uid = currentUser?.uid || "guest";
+    const updatedWithUser = { ...savedWorkspace, userId: uid };
+
+    const exists = projects.findIndex((p) => p.id === savedWorkspace.id);
+    let updatedProjects: ProjectWorkspace[];
+    if (exists >= 0) {
+      updatedProjects = [...projects];
+      updatedProjects[exists] = updatedWithUser;
+    } else {
+      updatedProjects = [updatedWithUser, ...projects];
+    }
+
+    setProjects(updatedProjects);
+    setActiveWorkspaceId(updatedWithUser.id);
+    await saveUserProject(uid, updatedWithUser);
+  };
+
+  const handleDeleteWorkspace = async (workspaceId: string) => {
+    const uid = currentUser?.uid || "guest";
+    const remaining = projects.filter((p) => p.id !== workspaceId);
+    const finalProjects = remaining.length > 0 ? remaining : DEFAULT_INITIAL_WORKSPACES;
+
+    setProjects(finalProjects);
+    if (activeWorkspaceId === workspaceId) {
+      setActiveWorkspaceId(finalProjects[0].id);
+    }
+    await deleteUserProject(uid, workspaceId);
+  };
+
+  const handleLogout = async () => {
+    await logoutUser();
+    setCurrentUser(null);
+  };
+
   return (
     <div className="min-h-screen bg-[#080c15] text-slate-100 flex flex-col font-sans">
-      {/* Top Navigation Bar adhering to 3-Zone Contract */}
+      {/* Top Navigation Bar adhering to 3-Zone Contract with Auth & Project Switcher */}
       <Navbar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenJsonModal={() => setIsJsonModalOpen(true)}
         onOpenSearchModal={() => setIsCustomModalOpen(true)}
+        onOpenSec19aModal={() => {
+          setSec19aAuditTicker(selectedTicker || "SPYI");
+          setIsSec19aModalOpen(true);
+        }}
         onOpenWelcomeGuide={() => {
-          localStorage.removeItem("has_seen_income_welcome");
+          try {
+            localStorage.removeItem("has_seen_income_welcome");
+          } catch {
+            // ignore
+          }
           setActiveTab("overview");
+        }}
+        currentUser={currentUser}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onLogout={handleLogout}
+        projects={projects}
+        activeWorkspace={activeWorkspace}
+        onSelectWorkspace={setActiveWorkspaceId}
+        onOpenNewWorkspaceModal={() => {
+          setEditingWorkspace(null);
+          setIsWorkspaceModalOpen(true);
+        }}
+        onOpenEditWorkspaceModal={() => {
+          setEditingWorkspace(activeWorkspace);
+          setIsWorkspaceModalOpen(true);
         }}
       />
 
@@ -85,7 +253,7 @@ export default function App() {
           />
         )}
 
-        {/* Analytical Views (Fleet, Diagnostics, Benchmark, Portfolio, Simulator) */}
+        {/* Analytical Views (Fleet, Analytics, Audit, Portfolio, Overlap, Diagnostics, Benchmark, Simulator) */}
         {activeTab !== "overview" && (
           <div className="space-y-6">
             {/* Executive Workspace Header */}
@@ -93,11 +261,16 @@ export default function App() {
               <div>
                 <div className="text-xs text-sky-400 font-semibold tracking-wider uppercase mb-1 flex items-center gap-1.5">
                   <ShieldAlert className="w-3.5 h-3.5" />
-                  <span>Executive Wealth Diagnostics · Institutional Income Analysis</span>
+                  <span>
+                    Workspace: {activeWorkspace.name} · ${activeWorkspace.initialCapital.toLocaleString()} ({activeWorkspace.targetYieldPct}% Target)
+                  </span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                   {activeTab === "fleet" && "Evaluated Fleet Matrix & Risk Screener"}
+                  {activeTab === "analytics" && "Interactive Quantitative Graphics & Risk Topography"}
+                  {activeTab === "audit" && "Executive Risk Audit & Macro Stress Simulator"}
                   {activeTab === "portfolio" && "Portfolio Stress-Testing & Allocation Engine"}
+                  {activeTab === "overlap" && "Portfolio Cross-ETF Overlap & Holding Concentration Matrix"}
                   {activeTab === "diagnostics" && `Forensic Risk Diagnostics: ${activeFund?.ticker}`}
                   {activeTab === "benchmark" && "Underlying Benchmark Divergence Audit"}
                   {activeTab === "simulator" && "Distribution Tax Efficiency & ROC Simulator"}
@@ -174,6 +347,28 @@ export default function App() {
               </div>
             )}
 
+            {/* Tab: Interactive Analytics Suite (Graphs) */}
+            {activeTab === "analytics" && (
+              <InteractiveAnalyticsSuite
+                funds={funds}
+                activeWorkspace={activeWorkspace}
+                selectedTicker={selectedTicker}
+                onSelectFund={handleSelectFund}
+              />
+            )}
+
+            {/* Tab: Executive Audit & Macro Stress Simulator (Subscription Value) */}
+            {activeTab === "audit" && (
+              <ExecutiveAuditReport
+                funds={funds}
+                activeWorkspace={activeWorkspace}
+                onSelectFund={(ticker) => {
+                  setSelectedTicker(ticker);
+                  setActiveTab("diagnostics");
+                }}
+              />
+            )}
+
             {/* Tab: Portfolio Engine & Weighting Screener */}
             {activeTab === "portfolio" && (
               <PortfolioEngine
@@ -186,6 +381,24 @@ export default function App() {
                   if (newTicker) {
                     setSelectedTicker(newTicker);
                   }
+                }}
+                activeWorkspace={activeWorkspace}
+                onSaveToWorkspace={handleSaveWorkspace}
+                onOpenSec19aNotice={(ticker) => {
+                  setSec19aAuditTicker(ticker);
+                  setIsSec19aModalOpen(true);
+                }}
+              />
+            )}
+
+            {/* Tab: Cross-Holding Portfolio Overlap & Concentration Matrix */}
+            {activeTab === "overlap" && (
+              <OverlapMatrix
+                availableFunds={funds}
+                activeWorkspace={activeWorkspace}
+                onSelectFund={(ticker) => {
+                  setSelectedTicker(ticker);
+                  setActiveTab("diagnostics");
                 }}
               />
             )}
@@ -218,6 +431,10 @@ export default function App() {
                     benchmarks={BENCHMARKS}
                     onViewJson={handleViewJsonForFund}
                     onUpdateFund={handleUpdateFund}
+                    onOpenSec19aNotice={(ticker) => {
+                      setSec19aAuditTicker(ticker);
+                      setIsSec19aModalOpen(true);
+                    }}
                     onSelectReplacement={(ticker) => {
                       const matched = funds.find((f) => f.ticker === ticker);
                       if (matched) setSelectedTicker(matched.ticker);
@@ -289,6 +506,36 @@ export default function App() {
         onClose={() => setIsCustomModalOpen(false)}
         onAddFund={handleAddCustomFund}
         existingTickers={funds.map((f) => f.ticker)}
+      />
+
+      {/* User Login & Registration Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={(user) => {
+          setCurrentUser(user);
+        }}
+      />
+
+      {/* Workspace / Project Manager Modal */}
+      <WorkspaceManagerModal
+        isOpen={isWorkspaceModalOpen}
+        onClose={() => {
+          setIsWorkspaceModalOpen(false);
+          setEditingWorkspace(null);
+        }}
+        onSaveWorkspace={handleSaveWorkspace}
+        onDeleteWorkspace={handleDeleteWorkspace}
+        editingWorkspace={editingWorkspace}
+        existingCount={projects.length}
+      />
+
+      {/* SEC Rule 19a-1 Forensic Auditor Modal */}
+      <Sec19aAuditModal
+        isOpen={isSec19aModalOpen}
+        onClose={() => setIsSec19aModalOpen(false)}
+        initialTicker={sec19aAuditTicker}
+        availableFunds={funds}
       />
 
       {/* Executive Footer */}

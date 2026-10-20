@@ -4,7 +4,8 @@ export type FundCategory =
   | "Broad Index Covered Call"
   | "Single Stock Covered Call"
   | "BDC"
-  | "Preferred";
+  | "Preferred"
+  | "Dividend Growth ETF";
 
 /**
  * Strict JSON output schema specified by user
@@ -60,6 +61,50 @@ export interface FundProfile extends FundEvaluationOutput {
   }[];
   structural_pros: string[];
   structural_cons: string[];
+  top_holdings?: HoldingStock[];
+  sector_weights?: Record<string, number>;
+  sec_19a_notice?: Sec19aNotice;
+}
+
+export interface HoldingStock {
+  symbol: string;
+  name: string;
+  weight_pct: number;
+  sector: string;
+}
+
+export interface Sec19aNotice {
+  ticker: string;
+  fund_name: string;
+  filing_date: string;
+  distribution_per_share: number;
+  net_investment_income_pct: number;
+  short_term_capital_gains_pct: number;
+  long_term_capital_gains_pct: number;
+  return_of_capital_pct: number;
+  cumulative_roc_ytd_pct: number;
+  is_destructive_roc: boolean;
+  sec_form_reference: string;
+  forensic_verdict: string;
+  legal_disclaimer: string;
+}
+
+export interface OverlapConcentration {
+  symbol: string;
+  name: string;
+  total_weight_pct: number;
+  sector: string;
+  contributing_funds: { ticker: string; fund_weight: number; effective_exposure: number }[];
+}
+
+export interface EfficientFrontierPoint {
+  target_yield: number;
+  portfolio_volatility: number;
+  sharpe_ratio: number;
+  weights: Record<string, number>;
+  is_current_portfolio?: boolean;
+  is_optimal_sharpe?: boolean;
+  is_min_volatility?: boolean;
 }
 
 export interface BenchmarkMetrics {
@@ -71,11 +116,39 @@ export interface BenchmarkMetrics {
   dividend_yield_pct: number;
 }
 
-export type WeightingStrategy = "Equal Weighted" | "Vol / Risk-Capped" | "Target Yield Solver";
+export type WeightingStrategy =
+  | "Equal Weighted"
+  | "Vol / Risk-Capped"
+  | "Target Yield Solver"
+  | "MVO (Mean-Variance)";
 
 export interface PortfolioHolding extends FundProfile {
   weight_pct: number;
   allocated_dollars: number;
   annual_income_dollars: number;
   is_excluded: boolean;
+  after_tax_income_dollars?: number;
+  effective_tax_drag_pct?: number;
+  tax_treatment_label?: string;
+}
+
+export interface ProjectHolding {
+  ticker: string;
+  weight_pct: number;
+  shares?: number;
+  cost_basis?: number;
+}
+
+export interface ProjectWorkspace {
+  id: string;
+  userId: string;
+  name: string;
+  description: string;
+  accountType: "taxable" | "traditional_ira" | "roth_ira";
+  initialCapital: number;
+  targetYieldPct: number;
+  marginalTaxRatePct: number;
+  createdAt: string;
+  updatedAt: string;
+  holdings: ProjectHolding[];
 }

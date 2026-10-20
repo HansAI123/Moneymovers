@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { FundProfile, FundCategory, AlertStatus } from "../types/fund";
-import { ArrowUpDown, AlertCircle, CheckCircle2, ChevronRight, FileJson, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowUpDown, AlertCircle, CheckCircle2, ChevronRight, FileJson, TrendingUp, TrendingDown, ShieldCheck } from "lucide-react";
 
-export type TableFilter = "ALL" | AlertStatus | FundCategory | "GROWING" | "DECLINING";
+export type TableFilter = "ALL" | AlertStatus | FundCategory | "GROWING" | "DECLINING" | "NO_SINGLE_STOCK";
 
 interface FundMatrixTableProps {
   funds: FundProfile[];
@@ -46,6 +46,9 @@ export const FundMatrixTable: React.FC<FundMatrixTableProps> = ({
   // Filter logic
   const filteredFunds = funds.filter((fund) => {
     if (currentFilter === "ALL") return true;
+    if (currentFilter === "NO_SINGLE_STOCK") {
+      return fund.category !== "Single Stock Covered Call";
+    }
     if (currentFilter === "GROWING") {
       return fund.dividend_growth_classification === "Growing";
     }
@@ -103,6 +106,18 @@ export const FundMatrixTable: React.FC<FundMatrixTableProps> = ({
             }`}
           >
             All ({funds.length})
+          </button>
+          <button
+            onClick={() => onFilterChange("NO_SINGLE_STOCK")}
+            className={`px-2.5 py-1 rounded transition-colors whitespace-nowrap flex items-center gap-1 ${
+              currentFilter === "NO_SINGLE_STOCK"
+                ? "bg-sky-950 text-sky-300 font-semibold border border-sky-700 shadow-sm"
+                : "text-slate-400 hover:text-sky-300"
+            }`}
+            title="Exclude single-stock synthetic funds (e.g. YieldMax/TSLY/NVDY); focus purely on broad index covered calls and dividend growth ETFs"
+          >
+            <ShieldCheck className="w-3 h-3 text-sky-400" />
+            <span>Broad Index Only ({funds.filter((f) => f.category !== "Single Stock Covered Call").length})</span>
           </button>
           <button
             onClick={() => onFilterChange("GROWING")}

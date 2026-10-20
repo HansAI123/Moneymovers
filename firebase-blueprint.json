@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile settings and preferences",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The unique Firebase Auth user identifier"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Account creation timestamp"
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "ProjectWorkspace": {
+      "title": "ProjectWorkspace",
+      "description": "Investment project workspace with simulation targets and portfolio holdings",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique workspace identifier"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owning user UID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Project workspace title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Project strategy thesis or description"
+        },
+        "accountType": {
+          "type": "string",
+          "description": "Account type: taxable, traditional_ira, or roth_ira"
+        },
+        "initialCapital": {
+          "type": "number",
+          "description": "Portfolio initial capital dollar amount"
+        },
+        "targetYieldPct": {
+          "type": "number",
+          "description": "Target annual dividend yield percentage"
+        },
+        "marginalTaxRatePct": {
+          "type": "number",
+          "description": "User marginal tax rate percentage"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp"
+        },
+        "holdingsJson": {
+          "type": "string",
+          "description": "JSON serialized array of portfolio holdings and weight allocations"
+        }
+      },
+      "required": ["id", "userId", "name", "targetYieldPct", "initialCapital"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document storing basic account preferences"
+    },
+    "/users/{userId}/projects/{projectId}": {
+      "schema": "ProjectWorkspace",
+      "description": "Subcollection of portfolio project workspaces owned by the user"
+    }
+  }
+}

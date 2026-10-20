@@ -8,4 +8,10 @@ window.addEventListener('unhandledrejection', (e) => {
   }
 });
 
+window.addEventListener('error', (e) => {
+  if (e.message && (e.message.includes('WebSocket') || e.message.includes('closed without opened'))) {
+    e.preventDefault();
+  }
+});
+
 createRoot(document.getElementById('root')!).render(<App />);

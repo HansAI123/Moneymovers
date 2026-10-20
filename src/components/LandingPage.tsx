@@ -22,10 +22,14 @@ import {
   HelpCircle
 } from "lucide-react";
 import { FundProfile } from "../types/fund";
+import { NavTab } from "./Navbar";
+import heroIncomeImg from "../assets/images/hero_income_diagnostic_1792328608973.jpg";
+import featureMatrixImg from "../assets/images/feature_matrix_audit_1792328609883.jpg";
+import featureTaxImg from "../assets/images/feature_tax_simulator_1792328609265.jpg";
 
 interface LandingPageProps {
   funds: FundProfile[];
-  onNavigateTab: (tab: "fleet" | "portfolio" | "diagnostics" | "benchmark" | "simulator") => void;
+  onNavigateTab: (tab: NavTab) => void;
   onOpenSearchModal: () => void;
   onSelectFund: (ticker: string) => void;
 }
@@ -37,18 +41,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onSelectFund,
 }) => {
   const [showWelcomeGuide, setShowWelcomeGuide] = useState<boolean>(() => {
-    return localStorage.getItem("has_seen_income_welcome") !== "true";
+    try {
+      return localStorage.getItem("has_seen_income_welcome") !== "true";
+    } catch {
+      return true;
+    }
   });
 
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
   const handleDismissWelcome = () => {
     setShowWelcomeGuide(false);
-    localStorage.setItem("has_seen_income_welcome", "true");
+    try {
+      localStorage.setItem("has_seen_income_welcome", "true");
+    } catch {
+      // ignore
+    }
   };
 
   const handleResetWelcome = () => {
     setShowWelcomeGuide(true);
+    try {
+      localStorage.removeItem("has_seen_income_welcome");
+    } catch {
+      // ignore
+    }
   };
 
   // Quick stats
@@ -277,8 +294,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 onClick={() => onNavigateTab("fleet")}
                 className="px-5 py-2.5 text-xs font-semibold text-slate-950 bg-sky-400 hover:bg-sky-300 rounded-lg transition-colors flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap shrink-0"
               >
-                <span>Launch Fleet Risk Matrix</span>
+                <span>Launch Fleet Matrix</span>
                 <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => onNavigateTab("analytics")}
+                className="px-4 py-2.5 text-xs font-medium text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <TrendingUp className="w-4 h-4 text-emerald-400" />
+                <span>Interactive Graphs</span>
+              </button>
+
+              <button
+                onClick={() => onNavigateTab("audit")}
+                className="px-4 py-2.5 text-xs font-medium text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                <span>Executive Risk Audit</span>
               </button>
 
               <button
@@ -286,12 +319,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 className="px-4 py-2.5 text-xs font-medium text-slate-200 bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg transition-colors flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
               >
                 <PieChart className="w-4 h-4 text-sky-400" />
-                <span>Stress-Test Portfolio</span>
+                <span>Portfolio Engine</span>
               </button>
 
               <button
                 onClick={onOpenSearchModal}
-                className="px-4 py-2.5 text-xs font-medium text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                className="px-3.5 py-2 text-xs font-medium text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
               >
                 <Search className="w-3.5 h-3.5" />
                 <span>Audit Custom Ticker</span>
@@ -325,9 +358,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="lg:col-span-5">
             <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-[#080d19] aspect-[16/9] lg:aspect-[4/3] shadow-2xl">
               <img
-                src="/src/assets/images/hero_income_diagnostic_1792328608973.jpg"
+                src={heroIncomeImg}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== "/images/hero_income_diagnostic_1792328608973.jpg") {
+                    target.src = "/images/hero_income_diagnostic_1792328608973.jpg";
+                  }
+                }}
                 alt="Institutional wealth management income diagnostic terminal"
-                referrerPolicy="no-referrer"
+                loading="eager"
                 className="w-full h-full object-cover object-center"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#080d19] via-transparent to-transparent pointer-events-none" />
@@ -377,9 +416,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {/* Visual feature asset */}
               <div className="relative rounded-lg overflow-hidden border border-slate-800/80 aspect-[16/7] my-3">
                 <img
-                  src="/src/assets/images/feature_matrix_audit_1792328609883.jpg"
+                  src={featureMatrixImg}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src !== "/images/feature_matrix_audit_1792328609883.jpg") {
+                      target.src = "/images/feature_matrix_audit_1792328609883.jpg";
+                    }
+                  }}
                   alt="Risk Audit Matrix interface"
-                  referrerPolicy="no-referrer"
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -518,9 +563,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {/* Visual feature asset */}
               <div className="relative rounded-lg overflow-hidden border border-slate-800/80 aspect-[16/7] my-3">
                 <img
-                  src="/src/assets/images/feature_tax_simulator_1792328609265.jpg"
+                  src={featureTaxImg}
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src !== "/images/feature_tax_simulator_1792328609265.jpg") {
+                      target.src = "/images/feature_tax_simulator_1792328609265.jpg";
+                    }
+                  }}
                   alt="Tax efficiency simulator interface"
-                  referrerPolicy="no-referrer"
+                  loading="lazy"
                   className="w-full h-full object-cover"
                 />
               </div>
